@@ -50,8 +50,7 @@ namespace Urho3D
 
 ParticleEditor::ParticleEditor(int argc, char** argv, Context* context) :
     QApplication(argc, argv),
-    Object(context),
-    engine_(new Engine(context_)),
+    Application(context),
     scene_(new Scene(context_)),
     mainWindow_(new MainWindow(context_))
 {
@@ -66,15 +65,16 @@ ParticleEditor::~ParticleEditor()
     delete mainWindow_;
 }
 
-int ParticleEditor::Run()
-{
-    VariantMap engineParameters;
-    engineParameters["FrameLimiter"] = false;
-    engineParameters["LogName"] = "ParticleEditor2D.log";
-    engineParameters["ExternalWindow"] = (void*)(mainWindow_->centralWidget()->winId());
-    if (!engine_->Initialize(engineParameters))
-        return -1;
+void ParticleEditor::Setup() {
+    engineParameters_["FrameLimiter"] = false;
+    engineParameters_["LogName"] = "ParticleEditor2D.log";
+//    engineParameters_["ExternalWindow"] = (void*)(mainWindow_->centralWidget()->winId());
+    engineParameters_["ResourcePrefixPaths"] = "/home/kostik/prog/ParticleEditor2D/Bin/";
+    engineParameters_["FullScreen"] = false;
+}
 
+void ParticleEditor::Start()
+{
     CreateScene();
     CreateConsole();
     CreateDebugHud();
@@ -87,7 +87,7 @@ int ParticleEditor::Run()
     connect(&timer, SIGNAL(timeout()), this, SLOT(OnTimeout()));
     timer.start(16);
 
-    return QApplication::exec();
+    QApplication::exec();
 }
 
 void ParticleEditor::New()

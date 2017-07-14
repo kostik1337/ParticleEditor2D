@@ -38,10 +38,10 @@ class ParticleEmitter2D;
 class Scene;
 
 /// Particle editor class.
-class ParticleEditor : public QApplication, public Object
+class ParticleEditor : public QApplication, public Application
 {
     Q_OBJECT
-    URHO3D_OBJECT(ParticleEditor, Object)
+    URHO3D_OBJECT(ParticleEditor, Application)
 
 public:
     /// Construct.
@@ -50,7 +50,8 @@ public:
     virtual ~ParticleEditor();
 
     /// Run.
-    int Run();
+    void Start();
+    void Setup();
 
     void New();
     void Open(const String& fileName);
@@ -89,8 +90,6 @@ private:
 
     /// Editor main window.
     MainWindow* mainWindow_;
-    /// Engine.
-    SharedPtr<Engine> engine_;
     /// Scene.
     SharedPtr<Scene> scene_;
     /// File name
