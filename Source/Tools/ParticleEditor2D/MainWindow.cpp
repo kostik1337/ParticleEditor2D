@@ -20,14 +20,14 @@
 // THE SOFTWARE.
 //
 
-#include "Camera.h"
-#include "Context.h"
+#include "Urho3D/Graphics/Camera.h"
+#include "Urho3D/Core/Context.h"
 #include "EmitterAttributeEditor.h"
 #include "MainWindow.h"
 #include "ParticleAttributeEditor.h"
 #include "ParticleEditor.h"
-#include "Renderer.h"
-#include "Zone.h"
+#include "Urho3D/Graphics/Renderer.h"
+#include "Urho3D/Graphics/Zone.h"
 #include <QAction>
 #include <QColorDialog>
 #include <QDockWidget>

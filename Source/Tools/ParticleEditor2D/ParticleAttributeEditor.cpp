@@ -22,7 +22,7 @@
 
 #include "ColorVarianceEditor.h"
 #include "ParticleAttributeEditor.h"
-#include "ParticleEffect2D.h"
+#include "Urho3D/Urho2D/ParticleEffect2D.h"
 #include "ValueVarianceEditor.h"
 #include <QVBoxLayout>
 

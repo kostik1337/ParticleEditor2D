@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014 the ParticleEditor2D project.
+# Copyright (c) 2008-2017 the Urho3D project.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,38 +20,24 @@
 # THE SOFTWARE.
 #
 
-# Define target name
-set (TARGET_NAME ParticleEditor2D)
+# Find aRts development library
+#
+#  ARTS_FOUND
+#  ARTS_INCLUDE_DIRS
+#  ARTS_LIBRARIES
+#  ARTS_VERSION
+#
 
-find_package(Qt4 REQUIRED)
-include(${QT_USE_FILE})
-add_definitions(${QT_DEFINITIONS})
+find_path (ARTS_INCLUDE_DIRS NAMES artsc/artsc.h PATH_SUFFIXES kde DOC "aRts include directory")
+find_library (ARTS_LIBRARIES NAMES artsc DOC "aRts library")
 
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-include (UrhoCommon)
-# Find Urho3D library
-find_package (Urho3D REQUIRED)
-include_directories (${URHO3D_INCLUDE_DIRS})
+if (NOT ARTS_VERSION AND ARTS_INCLUDE_DIRS AND EXISTS ${ARTS_INCLUDE_DIRS}/arts/artsversion.h)   # Only do this once
+    file (STRINGS ${ARTS_INCLUDE_DIRS}/arts/artsversion.h ARTS_VERSION REGEX "^.*ARTS_VERSION.+\"[^\"]*\".*$")
+    string (REGEX REPLACE "^.*ARTS_VERSION.+\"([^\"]*)\".*$" \\1 ARTS_VERSION "${ARTS_VERSION}")      # Stringify to guard against empty variable
+    set (ARTS_VERSION "${ARTS_VERSION}" CACHE INTERNAL "aRts version")
+endif ()
 
-# INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+include (FindPackageHandleStandardArgs)
+find_package_handle_standard_args (aRts REQUIRED_VARS ARTS_LIBRARIES ARTS_INCLUDE_DIRS VERSION_VAR ARTS_VERSION FAIL_MESSAGE "Could NOT find aRts development library")
 
-# Define source files
-define_source_files ()
-
-# Moccing h files
-qt4_wrap_cpp( MOC_FILES ${H_FILES} )
-
-# Compile ui files
-file (GLOB UI_FILES *.ui)
-qt4_wrap_ui( UI_HEADERS ${UI_FILES} )
-
-# Rccing qrc files
-file (GLOB QRC_FILES *.qrc)
-qt4_add_resources( RCC_FILES ${QRC_FILES} )
-
-set (SOURCE_FILES ${SOURCE_FILES} ${MOC_FILES} ${UI_HEADERS} ${RCC_FILES})
-
-# Setup target with resource copying
-setup_main_executable ()
-
-target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES})
+mark_as_advanced (ARTS_INCLUDE_DIRS ARTS_LIBRARIES)

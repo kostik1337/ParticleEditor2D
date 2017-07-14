@@ -34,7 +34,7 @@ class ValueVarianceEditor;
 class ParticleAttributeEditor : public ScrollAreaWidget, public ParticleEffectEditor
 {
     Q_OBJECT
-        OBJECT(ParticleAttributeEditor)
+        URHO3D_OBJECT(ParticleAttributeEditor, ParticleEffectEditor)
 public:
     ParticleAttributeEditor(Context* context);
     virtual ~ParticleAttributeEditor();

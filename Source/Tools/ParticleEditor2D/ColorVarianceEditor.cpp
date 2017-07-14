@@ -24,6 +24,7 @@
 #include "ColorVarianceEditor.h"
 #include <QComboBox>
 #include <QGroupBox>
+#include <stdio.h>
 
 namespace Urho3D
 {

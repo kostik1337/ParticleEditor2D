@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "Vector2.h"
+#include "Urho3D/Math/Vector2.h"
 #include <QGroupBox>
 
 namespace Urho3D

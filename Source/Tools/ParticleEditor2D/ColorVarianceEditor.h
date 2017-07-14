@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "Color.h"
+#include "Urho3D/Math/Color.h"
 #include <QGroupBox>
 
 class QComboBox;

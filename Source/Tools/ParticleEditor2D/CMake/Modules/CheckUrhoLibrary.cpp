@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2014 the ParticleEditor2D project.
+// Copyright (c) 2008-2017 the Urho3D project.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,20 +20,12 @@
 // THE SOFTWARE.
 //
 
-#include "Urho3D/Engine/Application.h"
-#include "ParticleEditor.h"
-#include <QFile>
+#include <Urho3D/LibraryInfo.h>
+#include <iostream>
 
-int main()
+using namespace Urho3D;
+
+int main(int argc, char* argv[])
 {
-    int argc = 0;
-    char** argv = 0;
-    Urho3D::SharedPtr<Urho3D::Context> context(new Urho3D::Context());
-    Urho3D::ParticleEditor editor(argc, argv, context);
-
-    QFile file(":/qdarkstyle/style.qss");
-    if (file.open(QFile::ReadOnly | QFile::Text))
-        editor.setStyleSheet(QLatin1String(file.readAll()));
-
-    return editor.Run();
+    std::cout << GetRevision() << "\n" << GetCompilerDefines();
 }

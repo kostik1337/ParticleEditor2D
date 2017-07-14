@@ -20,8 +20,9 @@
 // THE SOFTWARE.
 //
 
-#include "Object.h"
-#include "Ptr.h"
+#include "Urho3D/Core/Object.h"
+#include "Urho3D/Engine/Application.h"
+#include "Urho3D/Container/Ptr.h"
 #include <QApplication>
 
 namespace Urho3D
@@ -40,7 +41,7 @@ class Scene;
 class ParticleEditor : public QApplication, public Object
 {
     Q_OBJECT
-    OBJECT(ParticleEditor)
+    URHO3D_OBJECT(ParticleEditor, Object)
 
 public:
     /// Construct.

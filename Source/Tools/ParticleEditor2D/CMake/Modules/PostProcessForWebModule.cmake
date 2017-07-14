@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014 the ParticleEditor2D project.
+# Copyright (c) 2008-2017 the Urho3D project.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,38 +20,16 @@
 # THE SOFTWARE.
 #
 
-# Define target name
-set (TARGET_NAME ParticleEditor2D)
+# Post process to glue the main module and side module(s) together
 
-find_package(Qt4 REQUIRED)
-include(${QT_USE_FILE})
-add_definitions(${QT_DEFINITIONS})
-
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/CMake/Modules)
-include (UrhoCommon)
-# Find Urho3D library
-find_package (Urho3D REQUIRED)
-include_directories (${URHO3D_INCLUDE_DIRS})
-
-# INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
-
-# Define source files
-define_source_files ()
-
-# Moccing h files
-qt4_wrap_cpp( MOC_FILES ${H_FILES} )
-
-# Compile ui files
-file (GLOB UI_FILES *.ui)
-qt4_wrap_ui( UI_HEADERS ${UI_FILES} )
-
-# Rccing qrc files
-file (GLOB QRC_FILES *.qrc)
-qt4_add_resources( RCC_FILES ${QRC_FILES} )
-
-set (SOURCE_FILES ${SOURCE_FILES} ${MOC_FILES} ${UI_HEADERS} ${RCC_FILES})
-
-# Setup target with resource copying
-setup_main_executable ()
-
-target_link_libraries(${TARGET_NAME} ${QT_LIBRARIES})
+string (REPLACE " " .js',' SIDE_MODULES "'${SIDE_MODULES}.js'")              # Stringify for string replacement
+if (HAS_SHELL_FILE)
+    file (READ ${TARGET_FILE} CONTENT)
+    string (REPLACE ${TARGET_NAME}.js libUrho3D.js CONTENT "${CONTENT}")     # Stringify to preserve semicolons
+    # Assume HTML shell-file has Module object without the 'dynamicLibraries' prop defined yet
+    string (REGEX REPLACE "(var Module *= *{)" \\1dynamicLibraries:[${SIDE_MODULES}], CONTENT "${CONTENT}")
+    file (WRITE ${TARGET_FILE} "${CONTENT}")
+else ()
+    file (READ ${TARGET_DIR}/libUrho3D.js CONTENT)
+    file (WRITE ${TARGET_DIR}/${TARGET_NAME}.main.js "var Module={dynamicLibraries:[${SIDE_MODULES}]};${CONTENT}")
+endif ()

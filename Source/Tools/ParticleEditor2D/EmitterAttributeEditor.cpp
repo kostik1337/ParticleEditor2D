@@ -20,20 +20,21 @@
 // THE SOFTWARE.
 //
 
-#include "Context.h"
-#include "CoreEvents.h"
+#include "Urho3D/Core/Context.h"
+#include "Urho3D/Core/CoreEvents.h"
 #include "EmitterAttributeEditor.h"
 #include "FloatEditor.h"
 #include "IntEditor.h"
-#include "ParticleEffect2D.h"
-#include "ParticleEmitter2D.h"
-#include "ResourceCache.h"
-#include "Texture2D.h"
+#include "Urho3D/Urho2D/ParticleEffect2D.h"
+#include "Urho3D/Urho2D/ParticleEmitter2D.h"
+#include "Urho3D/Urho2D/Sprite2D.h"
+#include "Urho3D/Resource/ResourceCache.h"
+#include "Urho3D/Graphics/Texture2D.h"
 #include "ValueVarianceEditor.h"
 #include "Vector2Editor.h"
 #include <QApplication>
 #include <QComboBox>
-#include <QFileDialog.h>
+#include <qfiledialog.h>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -65,7 +66,7 @@ EmitterAttributeEditor::EmitterAttributeEditor(Context* context) :
 
     vBoxLayout_->addStretch(1);
 
-    SubscribeToEvent(E_POSTUPDATE, HANDLER(EmitterAttributeEditor, HandlePostUpdate));
+    SubscribeToEvent(E_POSTUPDATE, URHO3D_HANDLER(EmitterAttributeEditor, HandlePostUpdate));
 }
 
 EmitterAttributeEditor::~EmitterAttributeEditor()

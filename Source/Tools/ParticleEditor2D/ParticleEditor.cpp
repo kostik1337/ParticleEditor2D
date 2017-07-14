@@ -20,28 +20,28 @@
 // THE SOFTWARE.
 //
 
-#include "Camera.h"
-#include "Console.h"
-#include "Context.h"
-#include "CoreEvents.h"
-#include "DebugHud.h"
-#include "DebugRenderer.h"
-#include "Engine.h"
-#include "Graphics.h"
-#include "Input.h"
-#include "InputEvents.h"
-#include "Log.h"
+#include "Urho3D/Graphics/Camera.h"
+#include "Urho3D/Engine/Console.h"
+#include "Urho3D/Core/Context.h"
+#include "Urho3D/Core/CoreEvents.h"
+#include "Urho3D/Engine/DebugHud.h"
+#include "Urho3D/Graphics/DebugRenderer.h"
+#include "Urho3D/Engine/Engine.h"
+#include "Urho3D/Graphics/Graphics.h"
+#include "Urho3D/Input/Input.h"
+#include "Urho3D/Input/InputEvents.h"
+#include "Urho3D/IO/Log.h"
 #include "MainWindow.h"
-#include "Octree.h"
+#include "Urho3D/Graphics/Octree.h"
 #include "ParticleEditor.h"
-#include "ParticleEffect2D.h"
-#include "ParticleEmitter2D.h"
-#include "ProcessUtils.h"
-#include "Renderer.h"
-#include "ResourceCache.h"
-#include "Scene.h"
-#include "Viewport.h"
-#include "XMLFile.h"
+#include "Urho3D/Urho2D/ParticleEffect2D.h"
+#include "Urho3D/Urho2D/ParticleEmitter2D.h"
+#include "Urho3D/Core/ProcessUtils.h"
+#include "Urho3D/Graphics/Renderer.h"
+#include "Urho3D/Resource/ResourceCache.h"
+#include "Urho3D/Scene/Scene.h"
+#include "Urho3D/Graphics/Viewport.h"
+#include "Urho3D/Resource/XMLFile.h"
 #include <QFile>
 #include <QTimer>
 
@@ -55,10 +55,10 @@ ParticleEditor::ParticleEditor(int argc, char** argv, Context* context) :
     scene_(new Scene(context_)),
     mainWindow_(new MainWindow(context_))
 {
-    SubscribeToEvent(E_UPDATE, HANDLER(ParticleEditor, HandleUpdate));
-    SubscribeToEvent(E_KEYDOWN, HANDLER(ParticleEditor, HandleKeyDown));
-    SubscribeToEvent(E_MOUSEWHEEL, HANDLER(ParticleEditor, HandleMouseWheel));
-    SubscribeToEvent(E_RENDERUPDATE, HANDLER(ParticleEditor, HandleRenderUpdate));
+    SubscribeToEvent(E_UPDATE, URHO3D_HANDLER(ParticleEditor, HandleUpdate));
+    SubscribeToEvent(E_KEYDOWN, URHO3D_HANDLER(ParticleEditor, HandleKeyDown));
+    SubscribeToEvent(E_MOUSEWHEEL, URHO3D_HANDLER(ParticleEditor, HandleMouseWheel));
+    SubscribeToEvent(E_RENDERUPDATE, URHO3D_HANDLER(ParticleEditor, HandleRenderUpdate));
 }
 
 ParticleEditor::~ParticleEditor()
@@ -109,7 +109,7 @@ void ParticleEditor::Open(const String& fileName)
     ParticleEffect2D* particleEffect = cache->GetResource<ParticleEffect2D>(fileName);
     if (!particleEffect)
     {
-        LOGERROR("Open particle effect failed " + fileName);
+        URHO3D_LOGERROR("Open particle effect failed " + fileName);
         return;
     }
 
@@ -131,7 +131,7 @@ void ParticleEditor::Save(const String& fileName)
     File file(context_);
     if (!file.Open(fileName, FILE_WRITE))
     {
-        LOGERROR("Open file failed " + fileName);
+        URHO3D_LOGERROR("Open file failed " + fileName);
         return;
     }
 

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "Object.h"
+#include "Urho3D/Core/Object.h"
 
 namespace Urho3D
 {
@@ -32,7 +32,7 @@ class ParticleEmitter2D;
 /// Particle effect editor interface.
 class ParticleEffectEditor : public Object
 {
-    OBJECT(ParticleEffectEditor)
+    URHO3D_OBJECT(ParticleEffectEditor, Object)
 
 public:
     ParticleEffectEditor(Context* context);

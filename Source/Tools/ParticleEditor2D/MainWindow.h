@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "Object.h"
+#include "Urho3D/Core/Object.h"
 #include "ParticleEffectEditor.h"
-#include "Ptr.h"
+#include "Urho3D/Container/Ptr.h"
 #include <QMainWindow>
 #include <QMap>
 
@@ -43,7 +43,7 @@ class ScrollAreaWidget;
 class MainWindow : public QMainWindow, public ParticleEffectEditor
 {
     Q_OBJECT
-    OBJECT(MainWindow)
+    URHO3D_OBJECT(MainWindow, ParticleEffectEditor)
 
 public:
     /// Construct.
