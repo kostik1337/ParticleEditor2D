@@ -6,12 +6,22 @@
 #include "Fog.glsl"
 
 varying vec2 vTexCoord;
+
+#ifndef GL_ES
 varying vec2 vDetailTexCoord;
+#else
+varying mediump vec2 vDetailTexCoord;
+#endif
+
 varying vec3 vNormal;
 varying vec4 vWorldPos;
 #ifdef PERPIXEL
     #ifdef SHADOW
-        varying vec4 vShadowPos[NUMCASCADES];
+        #ifndef GL_ES
+            varying vec4 vShadowPos[NUMCASCADES];
+        #else
+            varying highp vec4 vShadowPos[NUMCASCADES];
+        #endif
     #endif
     #ifdef SPOTLIGHT
         varying vec4 vSpotPos;
@@ -35,7 +45,11 @@ uniform sampler2D sDetailMap1;
 uniform sampler2D sDetailMap2;
 uniform sampler2D sDetailMap3;
 
+#ifndef GL_ES
 uniform vec2 cDetailTiling;
+#else
+uniform mediump vec2 cDetailTiling;
+#endif
 
 void VS()
 {
@@ -54,16 +68,16 @@ void VS()
         #ifdef SHADOW
             // Shadow projection: transform from world space to shadow space
             for (int i = 0; i < NUMCASCADES; i++)
-                vShadowPos[i] = GetShadowPos(i, projWorldPos);
+                vShadowPos[i] = GetShadowPos(i, vNormal, projWorldPos);
         #endif
 
         #ifdef SPOTLIGHT
             // Spotlight projection: transform from world space to projector texture coordinates
-            vSpotPos = cLightMatrices[0] * projWorldPos;
+            vSpotPos = projWorldPos * cLightMatrices[0];
         #endif
     
         #ifdef POINTLIGHT
-            vCubeMaskVec = mat3(cLightMatrices[0][0].xyz, cLightMatrices[0][1].xyz, cLightMatrices[0][2].xyz) * (worldPos - cLightPos.xyz);
+            vCubeMaskVec = (worldPos - cLightPos.xyz) * mat3(cLightMatrices[0][0].xyz, cLightMatrices[0][1].xyz, cLightMatrices[0][2].xyz);
         #endif
     #else
         // Ambient & per-vertex lighting
@@ -71,7 +85,7 @@ void VS()
             // If using lightmap, disregard zone ambient light
             // If using AO, calculate ambient in the PS
             vVertexLight = vec3(0.0, 0.0, 0.0);
-            vTexCoord2 = iTexCoord2;
+            vTexCoord2 = iTexCoord1;
         #else
             vVertexLight = GetAmbient(GetZonePos(worldPos));
         #endif
@@ -142,7 +156,7 @@ void PS()
         #endif
 
         #ifdef AMBIENT
-            finalColor += cAmbientColor * diffColor.rgb;
+            finalColor += cAmbientColor.rgb * diffColor.rgb;
             finalColor += cMatEmissiveColor;
             gl_FragColor = vec4(GetFog(finalColor, fogFactor), diffColor.a);
         #else

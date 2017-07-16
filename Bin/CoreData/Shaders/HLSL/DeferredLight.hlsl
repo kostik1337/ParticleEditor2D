@@ -14,7 +14,7 @@ void VS(float4 iPos : POSITION,
     #ifdef ORTHO
         out float3 oNearRay : TEXCOORD2,
     #endif
-    out float4 oPos : POSITION)
+    out float4 oPos : OUTPOSITION)
 {
     float4x3 modelMatrix = iModelMatrix;
     float3 worldPos = GetWorldPos(modelMatrix);
@@ -44,30 +44,38 @@ void PS(
     #ifdef ORTHO
         float3 iNearRay : TEXCOORD2,
     #endif
-    out float4 oColor : COLOR0)
+    out float4 oColor : OUTCOLOR0)
 {
     // If rendering a directional light quad, optimize out the w divide
     #ifdef DIRLIGHT
+        float depth = Sample2DLod0(DepthBuffer, iScreenPos).r;
+        #ifdef HWDEPTH
+            depth = ReconstructDepth(depth);
+        #endif
         #ifdef ORTHO
-            float depth = Sample(sDepthBuffer, iScreenPos).r;
             float3 worldPos = lerp(iNearRay, iFarRay, depth);
         #else
-            float depth = Sample(sDepthBuffer, iScreenPos).r;
             float3 worldPos = iFarRay * depth;
         #endif
-        float4 albedoInput = Sample(sAlbedoBuffer, iScreenPos);
-        float4 normalInput = Sample(sNormalBuffer, iScreenPos);
+        float4 albedoInput = Sample2DLod0(AlbedoBuffer, iScreenPos);
+        float4 normalInput = Sample2DLod0(NormalBuffer, iScreenPos);
     #else
+        float depth = Sample2DProj(DepthBuffer, iScreenPos).r;
+        #ifdef HWDEPTH
+            depth = ReconstructDepth(depth);
+        #endif
         #ifdef ORTHO
-            float depth = tex2Dproj(sDepthBuffer, iScreenPos).r;
             float3 worldPos = lerp(iNearRay, iFarRay, depth) / iScreenPos.w;
         #else
-            float depth = tex2Dproj(sDepthBuffer, iScreenPos).r;
             float3 worldPos = iFarRay * depth / iScreenPos.w;
         #endif
-        float4 albedoInput = tex2Dproj(sAlbedoBuffer, iScreenPos);
-        float4 normalInput = tex2Dproj(sNormalBuffer, iScreenPos);
+        float4 albedoInput = Sample2DProj(AlbedoBuffer, iScreenPos);
+        float4 normalInput = Sample2DProj(NormalBuffer, iScreenPos);
     #endif
+
+    // Position acquired via near/far ray is relative to camera. Bring position to world space
+    float3 eyeVec = -worldPos;
+    worldPos += cCameraPosPS;
 
     float3 normal = normalize(normalInput.rgb * 2.0 - 1.0);
     float4 projWorldPos = float4(worldPos, 1.0);
@@ -77,12 +85,12 @@ void PS(
     float diff = GetDiffuse(normal, worldPos, lightDir);
 
     #ifdef SHADOW
-        diff *= GetShadowDeferred(projWorldPos, depth);
+        diff *= GetShadowDeferred(projWorldPos, normal, depth);
     #endif
 
     #if defined(SPOTLIGHT)
         float4 spotPos = mul(projWorldPos, cLightMatricesPS[0]);
-        lightColor = spotPos.w > 0.0 ? tex2Dproj(sLightSpotMap, spotPos).rgb * cLightColor.rgb : 0.0;
+        lightColor = spotPos.w > 0.0 ? Sample2DProj(LightSpotMap, spotPos).rgb * cLightColor.rgb : 0.0;
     #elif defined(CUBEMASK)
         lightColor = texCUBE(sLightCubeMap, mul(worldPos - cLightPosPS.xyz, (float3x3)cLightMatricesPS[0])).rgb * cLightColor.rgb;
     #else
@@ -90,7 +98,7 @@ void PS(
     #endif
 
     #ifdef SPECULAR
-        float spec = GetSpecular(normal, -worldPos, lightDir, normalInput.a * 255.0);
+        float spec = GetSpecular(normal, eyeVec, lightDir, normalInput.a * 255.0);
         oColor = diff * float4(lightColor * (albedoInput.rgb + spec * cLightColor.a * albedoInput.aaa), 0.0);
     #else
         oColor = diff * float4(lightColor * albedoInput.rgb, 0.0);

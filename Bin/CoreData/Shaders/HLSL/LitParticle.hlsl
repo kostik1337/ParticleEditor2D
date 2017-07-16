@@ -2,11 +2,29 @@
 #include "Samplers.hlsl"
 #include "Transform.hlsl"
 #include "Lighting.hlsl"
+#include "ScreenPos.hlsl"
 #include "Fog.hlsl"
 
+#if defined(COMPILEPS) && defined(SOFTPARTICLES)
+#ifndef D3D11
+// D3D9 uniform
+uniform float cSoftParticleFadeScale;
+#else
+// D3D11 constant buffer
+cbuffer CustomPS : register(b6)
+{
+    float cSoftParticleFadeScale;
+}
+#endif
+#endif
+
 void VS(float4 iPos : POSITION,
-    float3 iNormal : NORMAL,
-    float2 iTexCoord : TEXCOORD0,
+    #if !defined(BILLBOARD) && !defined(TRAILFACECAM)
+        float3 iNormal : NORMAL,
+    #endif
+    #ifndef NOUV
+        float2 iTexCoord : TEXCOORD0,
+    #endif
     #ifdef VERTEXCOLOR
         float4 iColor : COLOR0,
     #endif
@@ -15,12 +33,18 @@ void VS(float4 iPos : POSITION,
         int4 iBlendIndices : BLENDINDICES,
     #endif
     #ifdef INSTANCED
-        float4x3 iModelInstance : TEXCOORD2,
+        float4x3 iModelInstance : TEXCOORD4,
     #endif
-    #ifdef BILLBOARD
+    #if defined(BILLBOARD) || defined(DIRBILLBOARD)
         float2 iSize : TEXCOORD1,
     #endif
+    #if defined(TRAILFACECAM) || defined(TRAILBONE)
+        float4 iTangent : TANGENT,
+    #endif
     out float2 oTexCoord : TEXCOORD0,
+    #ifdef SOFTPARTICLES
+        out float4 oScreenPos : TEXCOORD1,
+    #endif
     out float4 oWorldPos : TEXCOORD3,
     #if PERPIXEL
         #ifdef SHADOW
@@ -38,13 +62,29 @@ void VS(float4 iPos : POSITION,
     #ifdef VERTEXCOLOR
         out float4 oColor : COLOR0,
     #endif
-    out float4 oPos : POSITION)
+    #if defined(D3D11) && defined(CLIPPLANE)
+        out float oClip : SV_CLIPDISTANCE0,
+    #endif
+    out float4 oPos : OUTPOSITION)
 {
+    // Define a 0,0 UV coord if not expected from the vertex data
+    #ifdef NOUV
+    float2 iTexCoord = float2(0.0, 0.0);
+    #endif
+    
     float4x3 modelMatrix = iModelMatrix;
     float3 worldPos = GetWorldPos(modelMatrix);
     oPos = GetClipPos(worldPos);
     oTexCoord = GetTexCoord(iTexCoord);
     oWorldPos = float4(worldPos, GetDepth(oPos));
+
+    #if defined(D3D11) && defined(CLIPPLANE)
+        oClip = dot(oPos, cClipPlane);
+    #endif
+
+    #ifdef SOFTPARTICLES
+        oScreenPos = GetScreenPos(oPos);
+    #endif
 
     #ifdef VERTEXCOLOR
         oColor = iColor;
@@ -56,7 +96,7 @@ void VS(float4 iPos : POSITION,
 
         #ifdef SHADOW
             // Shadow projection: transform from world space to shadow space
-            GetShadowPos(projWorldPos, oShadowPos);
+            GetShadowPos(projWorldPos, float3(0, 0, 0), oShadowPos);
         #endif
 
         #ifdef SPOTLIGHT
@@ -79,6 +119,9 @@ void VS(float4 iPos : POSITION,
 }
 
 void PS(float2 iTexCoord : TEXCOORD0,
+    #ifdef SOFTPARTICLES
+        float4 iScreenPos: TEXCOORD1,
+    #endif
     float4 iWorldPos : TEXCOORD3,
     #ifdef PERPIXEL
         #ifdef SHADOW
@@ -87,7 +130,7 @@ void PS(float2 iTexCoord : TEXCOORD0,
         #ifdef SPOTLIGHT
             float4 iSpotPos : TEXCOORD5,
         #endif
-        #ifdef CUBEMASK
+        #ifdef POINTLIGHT
             float3 iCubeMaskVec : TEXCOORD5,
         #endif
     #else
@@ -96,11 +139,14 @@ void PS(float2 iTexCoord : TEXCOORD0,
     #ifdef VERTEXCOLOR
         float4 iColor : COLOR0,
     #endif
-    out float4 oColor : COLOR0)
+    #if defined(D3D11) && defined(CLIPPLANE)
+        float iClip : SV_CLIPDISTANCE0,
+    #endif
+    out float4 oColor : OUTCOLOR0)
 {
     // Get material diffuse albedo
     #ifdef DIFFMAP
-        float4 diffInput = tex2D(sDiffMap, iTexCoord);
+        float4 diffInput = Sample2D(DiffMap, iTexCoord);
         #ifdef ALPHAMASK
             if (diffInput.a < 0.5)
                 discard;
@@ -121,6 +167,31 @@ void PS(float2 iTexCoord : TEXCOORD0,
         float fogFactor = GetFogFactor(iWorldPos.w);
     #endif
 
+    // Soft particle fade
+    // In expand mode depth test should be off. In that case do manual alpha discard test first to reduce fill rate
+    #ifdef SOFTPARTICLES
+        #ifdef EXPAND
+            if (diffColor.a < 0.01)
+                discard;
+        #endif
+
+        float particleDepth = iWorldPos.w;
+        float depth = Sample2DProj(DepthBuffer, iScreenPos).r;
+        #ifdef HWDEPTH
+            depth = ReconstructDepth(depth);
+        #endif
+
+        #ifdef EXPAND
+            float diffZ = max(particleDepth - depth, 0.0) * (cFarClipPS - cNearClipPS);
+            float fade = saturate(diffZ * cSoftParticleFadeScale);
+        #else
+            float diffZ = (depth - particleDepth) * (cFarClipPS - cNearClipPS);
+            float fade = saturate(1.0 - diffZ * cSoftParticleFadeScale);
+        #endif
+
+        diffColor.a = max(diffColor.a - fade, 0.0);
+    #endif
+
     #ifdef PERPIXEL
         // Per-pixel forward lighting
         float3 lightColor;
@@ -133,7 +204,7 @@ void PS(float2 iTexCoord : TEXCOORD0,
         #endif
 
         #if defined(SPOTLIGHT)
-            lightColor = iSpotPos.w > 0.0 ? tex2Dproj(sLightSpotMap, iSpotPos).rgb * cLightColor.rgb : 0.0;
+            lightColor = iSpotPos.w > 0.0 ? Sample2DProj(LightSpotMap, iSpotPos).rgb * cLightColor.rgb : 0.0;
         #elif defined(CUBEMASK)
             lightColor = texCUBE(sLightCubeMap, iCubeMaskVec).rgb * cLightColor.rgb;
         #else

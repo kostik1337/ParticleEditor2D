@@ -41,6 +41,5 @@ CMakeFiles/
 Urho3D.log
 
 cmake_install.cmake
-bin/
-build/
-config.json
+Source/Tools/build/
+ParticleEditor2D.log

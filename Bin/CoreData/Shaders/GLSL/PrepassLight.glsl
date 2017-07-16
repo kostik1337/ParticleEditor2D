@@ -38,7 +38,11 @@ void PS()
 {
     // If rendering a directional light quad, optimize out the w divide
     #ifdef DIRLIGHT
-        float depth = DecodeDepth(texture2D(sDepthBuffer, vScreenPos).rgb);
+        #ifdef HWDEPTH
+            float depth = ReconstructDepth(texture2D(sDepthBuffer, vScreenPos).r);
+        #else
+            float depth = DecodeDepth(texture2D(sDepthBuffer, vScreenPos).rgb);
+        #endif
         #ifdef ORTHO
             vec3 worldPos = mix(vNearRay, vFarRay, depth);
         #else
@@ -46,7 +50,11 @@ void PS()
         #endif
         vec4 normalInput = texture2D(sNormalBuffer, vScreenPos);
     #else
-        float depth = DecodeDepth(texture2DProj(sDepthBuffer, vScreenPos).rgb);
+        #ifdef HWDEPTH
+            float depth = ReconstructDepth(texture2DProj(sDepthBuffer, vScreenPos).r);
+        #else
+            float depth = DecodeDepth(texture2DProj(sDepthBuffer, vScreenPos).rgb);
+        #endif
         #ifdef ORTHO
             vec3 worldPos = mix(vNearRay, vFarRay, depth) / vScreenPos.w;
         #else
@@ -54,6 +62,10 @@ void PS()
         #endif
         vec4 normalInput = texture2DProj(sNormalBuffer, vScreenPos);
     #endif
+
+    // Position acquired via near/far ray is relative to camera. Bring position to world space
+    vec3 eyeVec = -worldPos;
+    worldPos += cCameraPosPS;
 
     vec3 normal = normalize(normalInput.rgb * 2.0 - 1.0);
     vec4 projWorldPos = vec4(worldPos, 1.0);
@@ -64,21 +76,21 @@ void PS()
     float diff = 0.5 * GetDiffuse(normal, worldPos, lightDir);
 
     #ifdef SHADOW
-        diff *= GetShadowDeferred(projWorldPos, depth);
+        diff *= GetShadowDeferred(projWorldPos, normal, depth);
     #endif
     
     #if defined(SPOTLIGHT)
-        vec4 spotPos = cLightMatricesPS[0] * projWorldPos;
+        vec4 spotPos = projWorldPos * cLightMatricesPS[0];
         lightColor = spotPos.w > 0.0 ? texture2DProj(sLightSpotMap, spotPos).rgb * cLightColor.rgb : vec3(0.0);
     #elif defined(CUBEMASK)
         mat3 lightVecRot = mat3(cLightMatricesPS[0][0].xyz, cLightMatricesPS[0][1].xyz, cLightMatricesPS[0][2].xyz);
-        lightColor = textureCube(sLightCubeMap, lightVecRot * (worldPos - cLightPosPS.xyz)).rgb * cLightColor.rgb;
+        lightColor = textureCube(sLightCubeMap, (worldPos - cLightPosPS.xyz) * lightVecRot).rgb * cLightColor.rgb;
     #else
         lightColor = cLightColor.rgb;
     #endif
 
     #ifdef SPECULAR
-        float spec = lightColor.g * GetSpecular(normal, -worldPos, lightDir, normalInput.a * 255.0);
+        float spec = lightColor.g * GetSpecular(normal, eyeVec, lightDir, normalInput.a * 255.0);
         gl_FragColor = diff * vec4(lightColor, spec * cLightColor.a);
     #else
         gl_FragColor = diff * vec4(lightColor, 0.0);

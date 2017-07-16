@@ -23,7 +23,7 @@
 # Define target name
 set (TARGET_NAME ParticleEditor2D)
 
-find_package(Qt4 REQUIRED)
+find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL REQUIRED)
 include(${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
 
@@ -50,6 +50,9 @@ file (GLOB QRC_FILES *.qrc)
 qt4_add_resources( RCC_FILES ${QRC_FILES} )
 
 set (SOURCE_FILES ${SOURCE_FILES} ${MOC_FILES} ${UI_HEADERS} ${RCC_FILES})
+
+SET(GCC_COVERAGE_LINK_FLAGS "-fsanitize=address")
+SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
 
 # Setup target with resource copying
 setup_main_executable ()

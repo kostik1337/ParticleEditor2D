@@ -45,7 +45,7 @@ class ParticleEditor : public QApplication, public Application
 
 public:
     /// Construct.
-    ParticleEditor(int argc, char** argv, Context* context);
+    ParticleEditor(int & argc, char** argv, Context* context);
     /// Destruct.
     virtual ~ParticleEditor();
 

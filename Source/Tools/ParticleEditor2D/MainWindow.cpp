@@ -35,6 +35,7 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QToolBar>
+#include <QGLWidget>
 
 namespace Urho3D
 {
@@ -48,7 +49,7 @@ MainWindow::MainWindow(Context* context) :
     setWindowIcon(QIcon(":/Images/Icon.png"));
     showMaximized();
 
-    QWidget* widget = new QWidget();
+    QWidget* widget = new QGLWidget();
     setCentralWidget(widget);
     
     widget->setMinimumSize(128, 128);
@@ -193,7 +194,7 @@ void MainWindow::HandleNewAction()
 
 void MainWindow::HandleOpenAction()
 {
-    QString fileName = QFileDialog::getOpenFileName(0, tr("Open particle"), "./Data/Urho2D/", "*.pex");
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open particle"), "./Data/Urho2D/", "*.pex");
     if (fileName.isEmpty())
         return;
 
@@ -211,7 +212,7 @@ void MainWindow::HandleSaveAction()
 
 void MainWindow::HandleSaveAsAction()
 {
-    QString fileName = QFileDialog::getSaveFileName(0, tr("Open particle"), "./Data/Urho2D/", "*.pex");
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Open particle"), "./Data/Urho2D/", "*.pex");
     if (fileName.isEmpty())
         return;
 
