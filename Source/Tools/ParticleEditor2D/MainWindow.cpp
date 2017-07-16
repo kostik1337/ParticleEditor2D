@@ -194,7 +194,7 @@ void MainWindow::HandleNewAction()
 
 void MainWindow::HandleOpenAction()
 {
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Open particle"), "./Data/Urho2D/", "*.pex");
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Open particle"), "./Data/Urho2D/", "*.pex", 0, QFileDialog::DontUseNativeDialog);
     if (fileName.isEmpty())
         return;
 
@@ -212,7 +212,7 @@ void MainWindow::HandleSaveAction()
 
 void MainWindow::HandleSaveAsAction()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Open particle"), "./Data/Urho2D/", "*.pex");
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Open particle"), "./Data/Urho2D/", "*.pex", 0, QFileDialog::DontUseNativeDialog);
     if (fileName.isEmpty())
         return;
 

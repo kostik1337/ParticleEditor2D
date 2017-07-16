@@ -91,7 +91,7 @@ void EmitterAttributeEditor::HandleDurationEditorValueChanged(float value)
 
 void EmitterAttributeEditor::HandleTexturePushButtonClicked()
 {
-    QString fileName = QFileDialog::getOpenFileName(0, tr("Texture"), "./Data/Urho2D/", "*.dds;*.png;*.jpg;*.bmp;*.tga;*.ktx;*.pvr");
+    QString fileName = QFileDialog::getOpenFileName(0, tr("Texture"), "./Data/Urho2D/", "Images (*.dds *.png *.jpg *.bmp *.tga *.ktx *.pvr)", 0, QFileDialog::DontUseNativeDialog);
     if (fileName.isEmpty())
         return;
 
